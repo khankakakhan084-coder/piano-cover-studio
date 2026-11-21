@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Piano Cover AI Studio — Mastered Acoustic Grand Piano Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- Ambient Background Glows -->
+  <div class="ambient-glow glow-top"></div>
+  <div class="ambient-glow glow-bottom"></div>
+
+  <!-- Studio Container -->
+  <div class="studio-container">
+    
+    <!-- Top Navigation & Branding -->
+    <header class="studio-header">
+      <div class="header-brand">
+        <div class="piano-icon-badge">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="16" rx="2" />
+            <path d="M7 4v10M11 4v10M15 4v10M19 4v10M3 14h18" />
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>Piano Cover <span>AI Studio</span></h1>
+          <p class="brand-subtitle">Mastered Acoustic Grand Piano Engine • ZeroGPU & SoundFont SF2</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div class="gpu-status-pill" id="gpuStatusPill" title="NVIDIA ZeroGPU Token Pool Status">
+          <span class="status-dot online"></span>
+          <span id="gpuStatusText">Cloud GPU Ready</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Studio Dashboard -->
+    <main class="studio-main">
+      
+      <!-- Upload & Configuration Section -->
+      <section class="card upload-card" id="uploadSection">
+        <div class="card-header">
+          <h2>1. Import Song or Audio</h2>
+          <span class="step-badge">Audio Input</span>
+        </div>
+
+        <!-- Drag & Drop Zone -->
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="audioFileInput" accept="audio/*,.mp3,.wav,.flac,.m4a,.ogg,.aac" hidden>
+          <div class="dropzone-content" id="dropzoneEmpty">
+            <div class="upload-icon-circle">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </div>
+            <p class="drop-title">Drop your song here or <span class="browse-link">browse</span></p>
+            <p class="drop-hint">Supports MP3, WAV, FLAC, M4A, OGG, AAC up to 100 MB</p>
+          </div>
+
+          <!-- File Loaded Info -->
+          <div class="dropzone-loaded" id="dropzoneLoaded" style="display: none;">
+            <div class="file-info-row">
+              <div class="file-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 18V5l12-2v13"/>
+                  <circle cx="6" cy="18" r="3"/>
+                  <circle cx="18" cy="16" r="3"/>
+                </svg>
+              </div>
+              <div class="file-meta">
+                <span class="file-name" id="loadedFileName">song.mp3</span>
+                <span class="file-size" id="loadedFileSize">0.0 MB</span>
+              </div>
+              <button type="button" class="btn-icon" id="btnRemoveFile" title="Remove audio">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Audio Waveform Preview & Trimmer -->
+            <div class="audio-trimmer-box">
+              <div class="trimmer-header">
+                <span class="trimmer-label">Optional Audio Range (Trim):</span>
+                <div class="trimmer-actions">
+                  <button type="button" class="chip-btn" id="btnFullSong">Full Song</button>
+                  <button type="button" class="chip-btn" id="btnFirst30">First 30s</button>
+                  <button type="button" class="chip-btn" id="btnFirst60">First 60s</button>
+                </div>
+              </div>
+
+              <audio id="inputAudioElement" preload="metadata" style="display: none;"></audio>
+
+              <div class="trimmer-inputs-row">
+                <div class="input-group">
+                  <label for="trimStart">Start (sec)</label>
+                  <input type="number" id="trimStart" value="0.0" min="0" step="0.5">
+                </div>
+                <div class="input-group">
+                  <label for="trimEnd">End (sec)</label>
+                  <input type="number" id="trimEnd" placeholder="Full" min="1" step="0.5">
+                </div>
+                <button type="button" class="btn-secondary btn-sm" id="btnPlayPreview">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                  </svg>
+                  Preview Range
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Studio Arrangement Settings -->
+        <div class="settings-grid">
+          
+          <!-- Engine Choice -->
+          <div class="setting-item">
+            <label class="setting-label">AI Engine & Execution</label>
+            <div class="custom-select-wrap">
+              <select id="engineModeSelect" class="studio-select">
+                <option value="auto" selected>✨ Auto (Cloud GPU + Local Fallback)</option>
+                <option value="cloud">⚡ Cloud ZeroGPU A100 (ByteDance AI)</option>
+                <option value="local">💻 Local Acoustic Grand (Offline SF2)</option>
+              </select>
+            </div>
+            <p class="setting-caption">Auto uses Hugging Face NVIDIA A100 with 17-token failover.</p>
+          </div>
+
+          <!-- Arrangement Mode -->
+          <div class="setting-item">
+            <label class="setting-label">Cover Arrangement Mode</label>
+            <div class="custom-select-wrap">
+              <select id="arrangementModeSelect" class="studio-select">
+                <option value="solo_piano" selected>🎹 Solo Acoustic Grand Piano</option>
+                <option value="piano_mix">🥁 Piano + Original Drums Backing</option>
+                <option value="full_stems">🎼 Master Piano + All Stems (ZIP)</option>
+              </select>
+            </div>
+            <p class="setting-caption">Full solo piano recital or modern rhythm cover.</p>
+          </div>
+
+          <!-- Transcribe Stem Focus -->
+          <div class="setting-item">
+            <label class="setting-label">Melody & Harmony Focus</label>
+            <div class="custom-select-wrap">
+              <select id="stemsToTranscribeSelect" class="studio-select">
+                <option value="vocals,other" selected>🎤 Lead Vocal Melody + Chords</option>
+                <option value="vocals">🎤 Vocal Melody Only (Clean)</option>
+                <option value="vocals,other,bass">🎸 Full Harmonic Arrangement (+Bass)</option>
+              </select>
+            </div>
+            <p class="setting-caption">HTDemucs isolates parts before neural piano transcription.</p>
+          </div>
+
+          <!-- Acoustic Grand Profile -->
+          <div class="setting-item">
+            <label class="setting-label">SoundFont Grand Acoustic</label>
+            <div class="custom-select-wrap">
+              <select id="soundfontProfileSelect" class="studio-select">
+                <option value="concert" selected>👑 Steinway Concert Grand D</option>
+                <option value="studio">✨ Yamaha C7 Studio Grand</option>
+                <option value="mellow">🍂 Romantic Mellow Grand</option>
+              </select>
+            </div>
+            <p class="setting-caption">Real 16-bit acoustic PCM samples rendered with sustain.</p>
+          </div>
+
+        </div>
+
+        <!-- Action Button -->
+        <div class="action-footer">
+          <button type="button" class="btn-primary" id="btnGenerate" disabled>
+            <span class="btn-icon-piano">🎹</span>
+            <span class="btn-text">Generate Acoustic Piano Cover</span>
+          </button>
+        </div>
+
+      </section>
+
+      <!-- Live Pipeline Processing Card (Active during generation) -->
+      <section class="card progress-card" id="progressSection" style="display: none;">
+        <div class="card-header">
+          <h2>2. Live Neural Piano Pipeline</h2>
+          <span class="live-pill" id="livePill">Processing...</span>
+        </div>
+
+        <div class="progress-bar-wrapper">
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="progressBarFill" style="width: 0%;"></div>
+          </div>
+          <div class="progress-info-row">
+            <span class="progress-stage-text" id="progressStageText">Connecting to GPU...</span>
+            <span class="progress-pct-text" id="progressPctText">0%</span>
+          </div>
+        </div>
+
+        <!-- 6-Stage Pipeline Graphic -->
+        <div class="pipeline-stages-grid">
+          <div class="stage-step" id="step-upload">
+            <div class="step-num">1</div>
+            <div class="step-title">Audio Ingest</div>
+            <div class="step-desc">FFmpeg decode & trim</div>
+          </div>
+          <div class="stage-step" id="step-separate">
+            <div class="step-num">2</div>
+            <div class="step-title">Stem Separation</div>
+            <div class="step-desc">HTDemucs AI Isolation</div>
+          </div>
+          <div class="stage-step" id="step-transcribe">
+            <div class="step-num">3</div>
+            <div class="step-title">Neural Transcription</div>
+            <div class="step-desc">ByteDance / pYIN Lead</div>
+          </div>
+          <div class="stage-step" id="step-harmonize">
+            <div class="step-num">4</div>
+            <div class="step-title">Legato & Harmony</div>
+            <div class="step-desc">Dissonance filtering</div>
+          </div>
+          <div class="stage-step" id="step-render">
+            <div class="step-num">5</div>
+            <div class="step-title">Acoustic SF2 Synth</div>
+            <div class="step-desc">Concert Grand samples</div>
+          </div>
+          <div class="stage-step" id="step-master">
+            <div class="step-num">6</div>
+            <div class="step-title">MIDI & Master Mix</div>
+            <div class="step-desc">Type-1 Score & 320k MP3</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Studio Results Console (Shown on completion) -->
+      <section class="card results-card" id="resultsSection" style="display: none;">
+        <div class="card-header">
+          <h2>3. Master Piano Performance & Score</h2>
+          <div class="track-tabs" id="trackTabs">
+            <button class="track-tab active" data-track="solo_piano">🎹 Solo Grand Piano</button>
+            <button class="track-tab" data-track="piano_mix">🥁 Piano + Drums Mix</button>
+            <button class="track-tab" data-track="vocals" id="tabVocals" style="display:none;">🎤 Vocals</button>
+            <button class="track-tab" data-track="other" id="tabOther" style="display:none;">🎸 Backing</button>
+          </div>
+        </div>
+
+        <!-- Studio Audio Player Console -->
+        <div class="studio-player">
+          <audio id="masterAudioPlayer" preload="auto"></audio>
+
+          <div class="player-controls-row">
+            <button type="button" class="player-btn-play" id="btnPlayMaster">
+              <svg id="playIcon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+              <svg id="pauseIcon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="display:none;">
+                <rect x="6" y="4" width="4" height="16"/>
+                <rect x="14" y="4" width="4" height="16"/>
+              </svg>
+            </button>
+
+            <div class="scrubber-container">
+              <div class="scrubber-time" id="currentTimeLabel">0:00</div>
+              <input type="range" class="scrubber-range" id="scrubberRange" min="0" max="100" value="0" step="0.1">
+              <div class="scrubber-time" id="totalDurationLabel">0:00</div>
+            </div>
+
+            <div class="volume-container">
+              <button type="button" class="btn-icon" id="btnMute">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                </svg>
+              </button>
+              <input type="range" class="volume-range" id="volumeRange" min="0" max="1" step="0.05" value="1">
+            </div>
+          </div>
+
+          <!-- Interactive Piano Roll Visualizer -->
+          <div class="piano-roll-container">
+            <div class="piano-roll-header">
+              <span class="roll-title">Interactive Visual Piano Roll</span>
+              <span class="roll-badge">MIDI Real-Time Visualization</span>
+            </div>
+            <canvas id="pianoRollCanvas" width="900" height="160"></canvas>
+            <div class="piano-keys-bar" id="pianoKeysBar"></div>
+          </div>
+        </div>
+
+        <!-- Music Theory & Performance Insights -->
+        <div class="insights-row">
+          <div class="insight-box">
+            <span class="insight-label">Musical Key</span>
+            <span class="insight-value" id="insightKey">C Major</span>
+          </div>
+          <div class="insight-box">
+            <span class="insight-label">Tempo</span>
+            <span class="insight-value" id="insightBpm">120 BPM</span>
+          </div>
+          <div class="insight-box">
+            <span class="insight-label">Total Notes</span>
+            <span class="insight-value" id="insightNotes">640 Notes</span>
+          </div>
+          <div class="insight-box">
+            <span class="insight-label">Engine Used</span>
+            <span class="insight-value" id="insightEngine">ZeroGPU A100</span>
+          </div>
+        </div>
+
+        <!-- Download Buttons Grid -->
+        <div class="downloads-card">
+          <h3 class="download-title">Download Master Assets</h3>
+          <div class="download-grid">
+            <a href="#" class="btn-download" id="btnDlMp3" target="_blank">
+              <div class="dl-icon">🎵</div>
+              <div class="dl-info">
+                <span class="dl-name">Solo Piano MP3</span>
+                <span class="dl-sub">320 kbps Master Audio</span>
+              </div>
+            </a>
+
+            <a href="#" class="btn-download" id="btnDlMidi" target="_blank">
+              <div class="dl-icon">🎼</div>
+              <div class="dl-info">
+                <span class="dl-name">Piano Score MIDI</span>
+                <span class="dl-sub">Type-1 Standard Multi-Track</span>
+              </div>
+            </a>
+
+            <a href="#" class="btn-download" id="btnDlWav" target="_blank">
+              <div class="dl-icon">🎹</div>
+              <div class="dl-info">
+                <span class="dl-name">Solo Piano WAV</span>
+                <span class="dl-sub">24-bit Lossless Studio PCM</span>
+              </div>
+            </a>
+
+            <a href="#" class="btn-download btn-download-accent" id="btnDlZip" target="_blank">
+              <div class="dl-icon">📦</div>
+              <div class="dl-info">
+                <span class="dl-name">All-in-One ZIP Bundle</span>
+                <span class="dl-sub">Audio, MIDI, Stems & Chords</span>
+              </div>
+            </a>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- Studio Footer -->
+    <footer class="studio-footer">
+      <p>Piano Cover Studio Engine • Powered by Meta HTDemucs, ByteDance Neural Transcription & Giga Grand SF2</p>
+    </footer>
+
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
