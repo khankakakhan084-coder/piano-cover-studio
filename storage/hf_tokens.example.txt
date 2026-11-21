@@ -1,0 +1,6 @@
+# Hugging Face Tokens for Piano Cover ZeroGPU Pool
+# Place your Hugging Face user access tokens below (one per line)
+# You can obtain free tokens from: https://huggingface.co/settings/tokens
+#
+# Example:
+# hf_YourHuggingFaceTokenHere123456789
